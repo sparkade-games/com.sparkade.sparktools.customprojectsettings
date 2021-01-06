@@ -27,8 +27,7 @@
         {
             if (SettingsExists<T>())
             {
-                Debug.LogError($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' already exists.");
-                return;
+                throw new ArgumentException($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' already exists.", "T");
             }
 
             T asset = ScriptableObject.CreateInstance<T>();
@@ -51,8 +50,7 @@
         {
             if (!SettingsExists<T>())
             {
-                Debug.LogError($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' does not exist.");
-                return;
+                throw new ArgumentException($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' does not exist.", "T");
             }
 
             File.Delete(Path.Combine(SettingsPath, GetSettingsFilename<T>()));
@@ -135,9 +133,9 @@
         /// </summary>
         public static void SaveCachedSettings()
         {
-            foreach (KeyValuePair<Type, SettingsAsset> pair in SettingsCache)
+            foreach (KeyValuePair<Type, SettingsAsset> entry in SettingsCache)
             {
-                File.WriteAllText(Path.Combine(SettingsPath, GetSettingsFilename(pair.Key)), JsonUtility.ToJson(pair.Value));
+                File.WriteAllText(Path.Combine(SettingsPath, GetSettingsFilename(entry.Key)), JsonUtility.ToJson(entry.Value));
             }
 
             SettingsCache.Clear();
