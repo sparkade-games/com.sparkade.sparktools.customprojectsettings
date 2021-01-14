@@ -12,9 +12,7 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
     /// </summary>
     public class SettingsBuildInjector : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        /// <summary>
-        /// Gets the relative callback order for callbacks. Callbacks with lower values are called before ones with higher values.
-        /// </summary>
+        /// <inheritdoc/>
         public int callbackOrder => 0;
 
         /// <summary>
