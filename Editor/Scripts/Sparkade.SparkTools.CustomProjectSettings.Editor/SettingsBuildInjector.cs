@@ -2,6 +2,7 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
 {
     using System;
     using System.IO;
+    using System.Linq;
     using UnityEditor;
     using UnityEditor.Build;
     using UnityEditor.Build.Reporting;
@@ -43,10 +44,10 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
             for (int i = 0; i < filePaths.Length; i += 1)
             {
                 string typeName = Path.GetFileNameWithoutExtension(filePaths[i]);
-                Type type = Type.GetType(typeName);
+                Type type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).FirstOrDefault(x => x.Name == typeName);
                 if (Path.GetExtension(filePaths[i]) == ".asset")
                 {
-                    if (type == null || !type.IsAssignableFrom(typeof(SettingsAsset)))
+                    if (type == null || !type.IsSubclassOf(typeof(SettingsAsset)))
                     {
                         Debug.LogWarning($"The SettingsAsset of type '{typeName}' does not exist, but a settings file for it exists at '{filePaths[i]}'.");
                         continue;

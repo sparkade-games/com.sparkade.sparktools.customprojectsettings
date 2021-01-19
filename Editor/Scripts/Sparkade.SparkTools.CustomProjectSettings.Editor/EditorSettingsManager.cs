@@ -11,12 +11,10 @@
     /// </summary>
     public static class EditorSettingsManager
     {
-        private static readonly Dictionary<Type, SettingsAsset> SettingsCache = new Dictionary<Type, SettingsAsset>();
-
         /// <summary>
         /// Gets the absolute path to where custom project settings are stored.
         /// </summary>
-        public static string SettingsPath => Path.Combine(Directory.GetParent(Application.dataPath).FullName, "ProjectSettings", "CustomSettings");
+        public static string SettingsPath => SettingsManager.EditorSettingsPath;
 
         /// <summary>
         /// Creates a cusom project setting of type 'T'.
@@ -38,7 +36,7 @@
                 Directory.CreateDirectory(SettingsPath);
             }
 
-            File.WriteAllText(Path.Combine(SettingsPath, GetSettingsFilename<T>()), JsonUtility.ToJson(asset));
+            File.WriteAllText(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename<T>()), JsonUtility.ToJson(asset));
         }
 
         /// <summary>
@@ -53,8 +51,8 @@
                 throw new ArgumentException($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' does not exist.", "T");
             }
 
-            File.Delete(Path.Combine(SettingsPath, GetSettingsFilename<T>()));
-            SettingsCache.Remove(typeof(T));
+            File.Delete(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename<T>()));
+            SettingsManager.SettingsCache.Remove(typeof(T));
         }
 
         /// <summary>
@@ -65,7 +63,7 @@
         public static T LoadSettings<T>()
             where T : SettingsAsset
         {
-            return GetCachedSettings<T>();
+            return SettingsManager.LoadSettings<T>();
         }
 
         /// <summary>
@@ -76,7 +74,7 @@
         public static bool SettingsExists<T>()
             where T : SettingsAsset
         {
-            return LoadSettings<T>() != null;
+            return SettingsManager.LoadSettings<T>() != null;
         }
 
         /// <summary>
@@ -86,15 +84,7 @@
         public static void InspectSettings<T>()
             where T : SettingsAsset
         {
-            T asset = GetCachedSettings<T>();
-
-            if (asset == null)
-            {
-                Debug.LogError($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' does not exist.");
-                return;
-            }
-
-            Selection.activeObject = asset;
+            Selection.activeObject = SettingsManager.LoadSettings<T>() ?? throw new ArgumentException($"SettingsAsset '{SettingsManager.GetSettingsName<T>()}' does not exist.", "T");
         }
 
         /// <summary>
@@ -133,41 +123,10 @@
         /// </summary>
         public static void SaveCachedSettings()
         {
-            foreach (KeyValuePair<Type, SettingsAsset> entry in SettingsCache)
+            foreach (KeyValuePair<Type, SettingsAsset> entry in SettingsManager.SettingsCache)
             {
-                File.WriteAllText(Path.Combine(SettingsPath, GetSettingsFilename(entry.Key)), JsonUtility.ToJson(entry.Value));
+                File.WriteAllText(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename(entry.Key)), JsonUtility.ToJson(entry.Value));
             }
-
-            SettingsCache.Clear();
-        }
-
-        private static T GetCachedSettings<T>()
-            where T : SettingsAsset
-        {
-            if (!SettingsCache.ContainsKey(typeof(T)))
-            {
-                string filePath = Path.Combine(SettingsPath, GetSettingsFilename<T>());
-
-                if (!File.Exists(filePath))
-                {
-                    return null;
-                }
-
-                SettingsCache[typeof(T)] = ScriptableObject.CreateInstance<T>();
-                JsonUtility.FromJsonOverwrite(File.ReadAllText(filePath), SettingsCache[typeof(T)]);
-            }
-
-            return SettingsCache[typeof(T)] as T;
-        }
-
-        private static string GetSettingsFilename(Type type)
-        {
-            return Path.ChangeExtension(SettingsManager.GetSettingsName(type), "asset");
-        }
-
-        private static string GetSettingsFilename<T>()
-        {
-            return GetSettingsFilename(typeof(T));
         }
     }
 }
