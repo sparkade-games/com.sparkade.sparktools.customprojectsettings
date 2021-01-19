@@ -1,6 +1,8 @@
 namespace Sparkade.SparkTools.CustomProjectSettings.Editor
 {
+    using System;
     using System.IO;
+    using System.Linq;
     using UnityEditor;
     using UnityEditor.Build;
     using UnityEditor.Build.Reporting;
@@ -11,9 +13,7 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
     /// </summary>
     public class SettingsBuildInjector : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        /// <summary>
-        /// Gets the relative callback order for callbacks. Callbacks with lower values are called before ones with higher values.
-        /// </summary>
+        /// <inheritdoc/>
         public int callbackOrder => 0;
 
         /// <summary>
@@ -43,9 +43,17 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
 
             for (int i = 0; i < filePaths.Length; i += 1)
             {
+                string typeName = Path.GetFileNameWithoutExtension(filePaths[i]);
+                Type type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).FirstOrDefault(x => x.Name == typeName);
                 if (Path.GetExtension(filePaths[i]) == ".asset")
                 {
-                    ScriptableObject asset = ScriptableObject.CreateInstance(Path.GetFileNameWithoutExtension(filePaths[i]));
+                    if (type == null || !type.IsSubclassOf(typeof(SettingsAsset)))
+                    {
+                        Debug.LogWarning($"The SettingsAsset of type '{typeName}' does not exist, but a settings file for it exists at '{filePaths[i]}'.");
+                        continue;
+                    }
+
+                    ScriptableObject asset = ScriptableObject.CreateInstance(typeName);
                     JsonUtility.FromJsonOverwrite(File.ReadAllText(filePaths[i]), asset);
                     AssetDatabase.CreateAsset(asset, Path.Combine(SettingsManager.RelativeSettingsPath, Path.GetFileName(filePaths[i])));
                 }
