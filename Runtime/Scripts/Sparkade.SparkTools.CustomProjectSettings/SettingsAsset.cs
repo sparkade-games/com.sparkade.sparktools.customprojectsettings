@@ -11,8 +11,6 @@
         /// Called when the SettingsAsset is first created.
         /// Also called in the editor when 'Reset' is pressed.
         /// </summary>
-        public virtual void Reset()
-        {
-        }
+        public abstract void Reset();
     }
 }

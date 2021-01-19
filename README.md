@@ -10,40 +10,83 @@ If you wish to manually install, clone the repository into the `Packages` folder
 - All custom settings simply inherit from `SettingsAsset` and can be used like any other `ScriptableObject`.
 - When you create a setting it is, by default, stored in a `CustomSettings` folder located in the `ProjectSettings` folder of your project.
 - When a setting needs to be read by the editor it is read from the file and cached.
-- Cached settings will be written back to the file whenever Unity saves all scriptable objects, including its own settings.
-- During the build process all custom settings will be converted to ScriptableObjects and placed in the resources folder. They will be stripped from the editor once the build completes.
-- Similarly to building, starting play mode will also place all settings in your resources folder, and strip them out when play mode is exited.
+- Cached settings will be written back to the file whenever Unity saves all scriptable objects, including its own settings, or when entering play mode.
+- Settings can be edited while in play mode, but changes will not be saved.
+- During runtime, if no settings file exists for a setting, default values for the setting will be used.
+- During the build process all custom settings will be converted to ScriptableObjects and placed in the resources folder. They will be stripped from the editor once the build completes or fails.
 
 # How to Use
 There are two main static classes you will be using:
 
 - `SettingsManager`: Used to read settings at runtime, located in the namespace `Sparkade.SparkTools.CustomProjectSettings`.
 
-- `EditorSettingsManager`: Used to create, delete, read, and edit settings in the editor, located in the namespace `Sparkade.SparkTools.CustomProjectSettings.Editor`.
+- `EditorSettingsManager`: Used to create, destroy, read, and edit settings in the editor, located in the namespace `Sparkade.SparkTools.CustomProjectSettings.Editor`.
 
-## SettingsManager
-- `LoadSettings<T>()`: Returns the `SettingsAsset` of type 'T'. If none exists, it will return null.
+All settings should inherit from `SettingsAsset`, located in `Sparkade.SparkTools.CustomProjectSettings`. Override the `Reset()` method to set default values for the settings.
 
-- `SettingsExist<T>()`: Returns whether or not the `SettingsAsset` of type 'T' exists.
+# Example
+Let's make a `SettingsAsset`:
+```
+using Sparkade.SparkTools.CustomProjectSettings;
+using UnityEngine;
 
-- `GetSettingsName<T>()`: Returns the `SettingsAsset`'s name as a string.
+public class TestSetting : SettingsAsset
+{
+    public float Value;
+    
+    public override void Reset()
+    {
+        this.Value = 10.0f;
+    }
+}
+```
+We just need to make sure it inherits `SettingsAsset` and overrides Reset.
 
-## EditorSettingsManager
-- `CreateSettings<T>()`: Creates a new `SettingsAsset` of type 'T'.
+Now let's add a method to inspect this `SettingsAsset`:
+```
+using Sparkade.SparkTools.CustomProjectSettings.Editor;
+using UnityEditor;
+#endif
 
-- `DestroySettings<T>()`: Deletes a `SettingsAsset` of type 'T'. Use with caution, it cannot be undone.
+public class TestSettings : SettingsAsset
+{
+    public float Value;
 
-- `LoadSettings<T>()`: Returns the `SettingsAsset` of type 'T'. If none exists, it will return null.
+    public override void Reset()
+    {
+        this.Value = 10.0f;
+    }
 
-- `SettingsExists<T>()`: Returns whether or not the `SettingsAsset` of type 'T' exists.
+#if UNITY_EDITOR
+    [MenuItem("Edit/MySettings...")]
+    private static void InspectOrCreateSettings()
+    {
+        EditorSettingsManager.InspectOrCreateSettings<TestSetting>();
+    }
+#endif
+}
+```
+We made sure to wrap any editor specific code in compiler tags to keep it out of our build. Now we have a new option under the 'Edit' menu called 'MySettings...'. Clicking it will bring our settings up in the inspector! From here we can adjust `Value` in our `TestSettings`.
 
-- `InspectSettings<T>()`: Brings up the `SettingsAsset` of type 'T' in the inspector window.
+Finally, let's utilize this setting at runtime:
+```
+using Sparkade.SparkTools.CustomProjectSettings;
+using UnityEngine;
+using UnityEngine.UI;
 
-- `LoadOrCreateSettings<T>()`: Returns the `SettingsAsset` of type 'T', and creates one if it doesn't exist.
+public class TestSettingsDisplay : MonoBehaviour
+{
+    private Text textComponent;
 
-- `InspectOrCreateSettings<T>()`: Brings up the `SettingsAsset` of type 'T' in the inspector window, and creates one if it doesn't exist.
+    private void Awake()
+    {
+        this.textComponent = this.GetComponent<Text>();
+    }
 
-- `SaveCachedSettings()`: If you need to manually save all cached settings, use this.
-
-## SettingsAsset
-- `Reset()`: Resets the `SettingsAsset` to default values. This is also called if you reset from the inspector window.
+    private void Update()
+    {
+        this.textComponent.text = SettingsManager.LoadSettings<TestSetting>().Value.ToString();
+    }
+}
+```
+This simply changes a `Text` component to display `Value`. It updates every frame, so if you change `Value` at runtime the text will update to reflect this change. You could even impliment a callback for when the `Value` is changed in `TestSettings` to avoid running every frame!
