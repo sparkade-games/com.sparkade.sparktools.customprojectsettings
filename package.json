@@ -1,6 +1,6 @@
 {
   "name": "com.sparkade.sparktools.customprojectsettings",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "displayName": "SparkTools: Custom Project Settings",
   "description": "Allows for the creation of custom project settings, usable both in the editor and at runtime.",
   "unity": "2020.2",
