@@ -123,6 +123,11 @@
         /// </summary>
         public static void SaveCachedSettings()
         {
+            if (!Directory.Exists(SettingsPath))
+            {
+                Directory.CreateDirectory(SettingsPath);
+            }
+
             foreach (KeyValuePair<Type, SettingsAsset> entry in SettingsManager.SettingsCache)
             {
                 File.WriteAllText(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename(entry.Key)), JsonUtility.ToJson(entry.Value));
