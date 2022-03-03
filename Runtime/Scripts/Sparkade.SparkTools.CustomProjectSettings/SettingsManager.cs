@@ -9,7 +9,6 @@ namespace Sparkade.SparkTools.CustomProjectSettings
 #if UNITY_EDITOR
     using UnityEditorInternal;
 #endif
-
     using System;
     using System.Collections.Generic;
     using System.IO;
