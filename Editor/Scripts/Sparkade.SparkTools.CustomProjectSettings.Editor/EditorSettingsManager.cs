@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using UnityEditor;
+    using UnityEditorInternal;
     using UnityEngine;
 
     /// <summary>
@@ -35,8 +36,8 @@
             {
                 Directory.CreateDirectory(SettingsPath);
             }
-
-            File.WriteAllText(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename<T>()), JsonUtility.ToJson(asset));
+            var array = new UnityEngine.Object[] { asset };
+            InternalEditorUtility.SaveToSerializedFileAndForget(array, Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename<T>()), true);
         }
 
         /// <summary>
@@ -130,7 +131,9 @@
 
             foreach (KeyValuePair<Type, SettingsAsset> entry in SettingsManager.SettingsCache)
             {
-                File.WriteAllText(Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename(entry.Key)), JsonUtility.ToJson(entry.Value));
+                var array = new UnityEngine.Object[] { entry.Value };
+
+                InternalEditorUtility.SaveToSerializedFileAndForget(array, Path.Combine(SettingsPath, SettingsManager.GetSettingsFilename(entry.Key)), true);
             }
         }
     }

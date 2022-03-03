@@ -6,6 +6,7 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
     using UnityEditor;
     using UnityEditor.Build;
     using UnityEditor.Build.Reporting;
+    using UnityEditorInternal;
     using UnityEngine;
 
     /// <summary>
@@ -52,9 +53,9 @@ namespace Sparkade.SparkTools.CustomProjectSettings.Editor
                         Debug.LogWarning($"The SettingsAsset of type '{typeName}' does not exist, but a settings file for it exists at '{filePaths[i]}'.");
                         continue;
                     }
-
-                    ScriptableObject asset = ScriptableObject.CreateInstance(typeName);
-                    JsonUtility.FromJsonOverwrite(File.ReadAllText(filePaths[i]), asset);
+                    var path = Path.Combine(SettingsManager.EditorSettingsPath, Path.GetFileName(filePaths[i]));
+                    Debug.Log(path);
+                    ScriptableObject asset = InternalEditorUtility.LoadSerializedFileAndForget(path).FirstOrDefault() as SettingsAsset;
                     AssetDatabase.CreateAsset(asset, Path.Combine(SettingsManager.RelativeSettingsPath, Path.GetFileName(filePaths[i])));
                 }
             }

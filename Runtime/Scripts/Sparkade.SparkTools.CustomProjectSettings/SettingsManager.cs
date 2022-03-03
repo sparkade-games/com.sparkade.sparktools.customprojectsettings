@@ -6,9 +6,13 @@ using System.Runtime.CompilerServices;
 
 namespace Sparkade.SparkTools.CustomProjectSettings
 {
+#if UNITY_EDITOR
+    using UnityEditorInternal;
+#endif
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using UnityEngine;
 
     /// <summary>
@@ -65,8 +69,7 @@ namespace Sparkade.SparkTools.CustomProjectSettings
                 }
                 else
                 {
-                    SettingsCache[typeof(T)] = ScriptableObject.CreateInstance<T>();
-                    JsonUtility.FromJsonOverwrite(File.ReadAllText(filePath), SettingsCache[typeof(T)]);
+                    SettingsCache[typeof(T)] = InternalEditorUtility.LoadSerializedFileAndForget(filePath).FirstOrDefault() as SettingsAsset;
                 }
 #else
                 int index = RelativeSettingsPath.IndexOf("Resources");
